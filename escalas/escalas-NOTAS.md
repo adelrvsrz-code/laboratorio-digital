@@ -1,6 +1,6 @@
 # Órdenes de magnitud — notas de la exposición
 
-Zoom continuo de 10⁻³⁵ a 10²⁷ metros con 106 objetos dibujados a escala entre sí. Un único HTML (`dist/ordenes-de-magnitud.html`, ~120 KB) generado a partir de los archivos `escalas-*`.
+Zoom continuo de 10⁻³⁵ a 10²⁷ metros con 106 objetos dibujados a escala entre sí. Un único HTML (~120 KB) generado a partir de los archivos `escalas-*`: en local, `dist/ordenes-de-magnitud.html`; publicado en <https://adelrvsrz-code.github.io/laboratorio-digital/ordenes-de-magnitud/>.
 
 ## Modelo de datos (`escalas-data.js`)
 

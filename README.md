@@ -4,9 +4,11 @@ Colección de exposiciones interactivas sobre ciencia y conocimiento: pequeñas 
 
 ## Índice de exposiciones
 
-| Prefijo | Exposición | Estado | Archivo público |
+| Prefijo | Exposición | Estado | Ruta pública |
 |---|---|---|---|
-| `escalas-` | Órdenes de magnitud | v1, funcional | `dist/ordenes-de-magnitud.html` |
+| `escalas-` | Órdenes de magnitud | v1, funcional | [`/ordenes-de-magnitud/`](https://adelrvsrz-code.github.io/laboratorio-digital/ordenes-de-magnitud/) |
+
+El sitio se publica en GitHub Pages, en <https://adelrvsrz-code.github.io/laboratorio-digital/>, desde la rama `main`. Cada exposición vive en su propia ruta y la raíz es la portada del laboratorio (de momento, una redirección a la única exposición que conserva el hash): así los enlaces a una exposición no cambian cuando llegue la siguiente.
 
 Próximas candidatas (ver «Hoja de ruta»): historia universal, relatividad.
 
@@ -24,8 +26,9 @@ escalas/                     exposición «Órdenes de magnitud»
   escalas-build.js           ensambla todo en un único HTML
   escalas-check.js           comprobaciones del catálogo sin navegador
   escalas-NOTAS.md           decisiones de diseño y guía para ampliar
-dist/                        HTML ensamblados (lo que se publica)
+site/                        raíz del sitio publicado (portada; hoy, redirección a /ordenes-de-magnitud/)
 .github/workflows/pages.yml  comprueba, ensambla y despliega en GitHub Pages en cada push a main
+dist/                        HTML ensamblados en local (ignorado por git: el despliegue los regenera)
 LICENSE                      licencia del código (MIT)
 LICENSE-CONTENIDOS.md        licencia de textos, iconos e ilustraciones (CC BY-SA 4.0)
 ```
@@ -70,7 +73,7 @@ Texto: español de España, frase corta, sin relleno. Coma decimal, espacio fino
 3. **Iconos** (`*-icons.js`): generadores SVG propios con un `viewBox` fijo de `0 0 100 100`; incluyen un tipo genérico `image` para incrustar imágenes propias como data URI.
 4. **Lógica** (`*-app.js`): un IIFE con las secciones formato, datos, estado, distribución, dibujo, HUD, entrada, paneles, arranque.
 5. **Estilos** (`*-styles.css`): tokens arriba, luego escenario, cabecera, pie, paneles, diálogos, varios, media queries.
-6. **Build** (`*-build.js`): solo concatena; no hay transpilación ni minificado. Salida en `dist/`.
+6. **Build** (`*-build.js`): solo concatena; no hay transpilación ni minificado. Salida por defecto en `dist/`; el despliegue le pasa como argumento la ruta pública (`_site/<ruta>/index.html`).
 7. **Comprobaciones** (`*-check.js`): validaciones del contenido ejecutables con Node sin navegador.
 
 Rendimiento: lo que se anima de forma continua se dibuja en un único `canvas` con mapas de bits pre-rasterizados (ver `escalas-NOTAS.md`). El DOM queda para la interfaz. Nada de `will-change` en muchos elementos, filtros CSS animados, `backdrop-filter` o `mix-blend-mode` a pantalla completa: en entornos con GPU compartida (el visor de artefactos de Claude, portátiles modestos) dejan mosaicos sin pintar.
@@ -83,7 +86,7 @@ Estado y enlaces: el objeto o posición actual va en el hash de la URL (`#tierra
 2. Editar los archivos fuente; `node --check` en cada JS; `node <prefijo>-check.js`.
 3. `node <prefijo>-build.js` → `dist/<nombre>.html`.
 4. Prueba en navegador sin cabeza (Playwright) a 1366×820 y 390×780: capturas, interacción básica, cero errores de consola, fps aproximados.
-5. Publicar como artefacto de Claude para probar en otros dispositivos. La versión pública la despliega GitHub Pages en cada push a `main`: la acción pasa las comprobaciones, ensambla `dist/` y publica el HTML también como `index.html`, así que `https://<usuario>.github.io/laboratorio-digital/` abre la exposición (y `/ordenes-de-magnitud.html` también). Si una comprobación falla, no se despliega.
+5. Publicar como artefacto de Claude para probar en otros dispositivos. La versión pública no se sube a mano: en cada push a `main`, GitHub Actions (`.github/workflows/pages.yml`) repite `node --check` y `<prefijo>-check.js`, ensambla cada exposición en `_site/<ruta>/index.html`, copia `site/` como raíz y despliega en GitHub Pages. Si una comprobación falla, no se publica nada. Al añadir una exposición: una línea más de build en el workflow y su entrada en la portada.
 6. Actualizar el índice de este README y las NOTAS de la exposición.
 
 Receta de prueba (Node + Playwright):
@@ -115,4 +118,4 @@ const { chromium } = require('playwright');
 
 - **Código** (lógica, estilos, plantillas, scripts de build y comprobación): [MIT](LICENSE). Úsalo, modifícalo y redistribúyelo conservando el aviso de autoría.
 - **Contenidos** (textos del catálogo, iconos, ilustraciones, notas y este README): [CC BY-SA 4.0](LICENSE-CONTENIDOS.md). Cita «Laboratorio digital, Adel Rivas Suárez», enlaza al repositorio y publica las adaptaciones con la misma licencia.
-- El HTML ensamblado de `dist/` combina ambas: su código va bajo MIT y sus contenidos bajo CC BY-SA 4.0.
+- El HTML ensamblado (el de `dist/` en local y el publicado) combina ambas: su código va bajo MIT y sus contenidos bajo CC BY-SA 4.0.
