@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Órdenes de magnitud</title>
+<meta name="description" content="Un viaje continuo de la longitud de Planck al universo observable, con más de cien objetos a escala.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="neb" aria-hidden="true"></div>
+<div id="vig" aria-hidden="true"></div>
+<div id="wm" class="wm" aria-hidden="true"></div>
+<div id="stage" role="region" aria-label="Visor de escalas. Usa la rueda del ratón, las flechas o la regla inferior para cambiar de escala."></div>
+
+<header class="top">
+  <div class="brand">
+    <h1>Órdenes de magnitud</h1>
+    <p class="sub">De la longitud de Planck al universo observable en un solo zoom. Los objetos se muestran a escala entre sí.</p>
+  </div>
+  <nav class="tools" aria-label="Herramientas">
+    <button class="ib" id="b-search" title="Buscar un objeto (/)" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+    <button class="ib" id="b-filter" title="Filtrar categorías" aria-label="Filtrar categorías"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg></button>
+    <button class="ib" id="b-compare" title="Comparar dos objetos (c)" aria-label="Comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="12" r="6"/><circle cx="17" cy="12" r="3"/></svg></button>
+    <button class="ib" id="b-random" title="Objeto al azar (r)" aria-label="Objeto al azar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"/></svg></button>
+    <button class="ib" id="b-tour" title="Recorrido automático (espacio)" aria-label="Recorrido automático" aria-pressed="false"><svg id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg id="i-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+    <button class="ib" id="b-help" title="Ayuda (?)" aria-label="Ayuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
+  </nav>
+</header>
+
+<button class="arrow left" id="prev" aria-label="Objeto anterior (más pequeño)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+<button class="arrow right" id="next" aria-label="Objeto siguiente (más grande)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+
+<div class="bottom">
+  <div class="readout">
+    <div class="realm"><div class="realm-name" id="realm-name"></div><div class="realm-sub" id="realm-sub"></div></div>
+    <div class="zoom"><button class="ib sm" id="zout" aria-label="Alejar">−</button><button class="ib sm" id="zin" aria-label="Acercar">+</button></div>
+    <div class="scale"><div class="big" id="sc-big"></div><div class="sm" id="sc-sci"></div><div class="sm" id="sc-light"></div></div>
+  </div>
+  <div id="ruler" aria-label="Regla logarítmica: arrastra para cambiar de escala, pulsa un punto para ir a ese objeto"><svg></svg></div>
+</div>
+
+<aside id="panel" aria-live="polite">
+  <button class="x" id="p-close" aria-label="Cerrar ficha">×</button>
+  <div class="p-head"><div id="p-ico" class="p-ico"></div><div><h2 id="p-name"></h2><span class="chip" id="p-cat"></span></div></div>
+  <div class="p-size"><div class="big" id="p-size"></div><div class="sm" id="p-sub"></div><div class="sm" id="p-sci"></div></div>
+  <p id="p-desc"></p>
+  <p id="p-light"></p>
+  <h3>Comparado con</h3>
+  <div id="p-cmp" class="cmp-rows"></div>
+  <div class="p-actions"><button class="btn" id="p-center">Centrar en el visor</button><button class="btn ghost" id="p-compare">Comparar</button></div>
+</aside>
+
+<div id="tip" role="tooltip"></div>
+<div id="hint">Rueda, arrastre o pellizco para cambiar de escala. Pulsa un objeto para abrir su ficha.</div>
+
+<dialog id="d-search" aria-label="Buscar">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Buscar un objeto</h2>
+  <input type="search" id="q" placeholder="Escribe un nombre: Luna, virus, Betelgeuse…" autocomplete="off" spellcheck="false">
+  <div class="res-list" id="res"></div>
+</dialog>
+
+<dialog id="d-filter" aria-label="Filtrar categorías">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Qué mostrar</h2>
+  <p>Desactiva las categorías que no te interesen. Los objetos ocultos desaparecen del visor y se atenúan en la regla.</p>
+  <div class="chips" id="chips"></div>
+  <button class="btn ghost" id="f-all">Mostrar todas</button>
+</dialog>
+
+<dialog id="d-compare" aria-label="Comparar">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Comparar dos objetos</h2>
+  <div class="cmp-grid"><select id="cmp-a" aria-label="Primer objeto"></select><select id="cmp-b" aria-label="Segundo objeto"></select></div>
+  <div class="cmp-vis" id="cmp-vis"></div>
+  <p id="cmp-text"></p>
+  <p id="cmp-vol"></p>
+  <button class="btn ghost" id="cmp-swap">Intercambiar</button>
+</dialog>
+
+<dialog id="d-help" class="help" aria-label="Ayuda">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Cómo se usa</h2>
+  <p>Todo lo que ves está a escala entre sí: cuando dos objetos aparecen juntos, la relación entre sus tamaños es la real. Cuando un objeto es demasiado grande para la pantalla se vuelve una silueta tenue, y cuando es demasiado pequeño queda como un punto de color.</p>
+  <dl>
+    <dt>Rueda, arrastre, pellizco</dt><dd>Cambiar de escala de forma continua</dd>
+    <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Objeto anterior o siguiente</dd>
+    <dt><kbd>↑</kbd> <kbd>↓</kbd> o <kbd>+</kbd> <kbd>−</kbd></dt><dd>Acercar o alejar</dd>
+    <dt><kbd>Inicio</kbd> <kbd>Fin</kbd></dt><dd>Ir al extremo más pequeño o más grande</dd>
+    <dt><kbd>Espacio</kbd></dt><dd>Recorrido automático</dd>
+    <dt><kbd>/</kbd></dt><dd>Buscar</dd>
+    <dt><kbd>r</kbd></dt><dd>Objeto al azar</dd>
+    <dt><kbd>c</kbd></dt><dd>Comparador</dd>
+    <dt><kbd>Esc</kbd></dt><dd>Cerrar fichas y ventanas</dd>
+  </dl>
+  <p style="margin-top:14px">Los tamaños son valores de referencia redondeados. En partículas elementales se indica la cota superior experimental; en estrellas gigantes y estructuras cósmicas, la estimación más citada.</p>
+</dialog>
+
+<script>
+{{DATA}}
+</script>
+<script>
+{{ICONS}}
+</script>
+<script>
+{{APP}}
+</script>
+</body>
+</html>
