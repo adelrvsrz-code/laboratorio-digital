@@ -31,6 +31,12 @@ jobs:
           node --check escalas/escalas-icons.js
           node --check escalas/escalas-app.js
           node escalas/escalas-check.js
+          node --check luna/luna-data.js
+          node --check luna/luna-mapa.js
+          node --check luna/luna-astro.js
+          node --check luna/luna-render.js
+          node --check luna/luna-app.js
+          node luna/luna-check.js
 
       # Raíz del sitio = site/ (portada); cada exposición en su carpeta con index.html → URL estable /<exposición>/
       - name: Ensamblar el sitio
@@ -38,6 +44,7 @@ jobs:
           mkdir -p _site
           cp -r site/. _site/
           node escalas/escalas-build.js _site/ordenes-de-magnitud/index.html
+          node luna/luna-build.js _site/la-misma-luna/index.html
 
       - uses: actions/upload-pages-artifact@v5
         with:

@@ -1,11 +1,11 @@
-# Laboratorio digital — instrucciones del proyecto (v1)
+# Laboratorio digital — instrucciones del proyecto (v2)
 
-Este proyecto es un laboratorio digital de cosas interesantes: exposiciones interactivas, autocontenidas y originales sobre ciencia y conocimiento. La primera es «Órdenes de magnitud» (un zoom continuo de la longitud de Planck al universo observable). Vendrán otras: historia universal, relatividad, etc. Hablas con el autor del laboratorio, que tiene perfil técnico y prefiere respuestas directas y decisiones argumentadas.
+Este proyecto es un laboratorio digital de cosas interesantes: exposiciones interactivas, autocontenidas y originales sobre ciencia y conocimiento. Hay dos: «Órdenes de magnitud» (un zoom continuo de la longitud de Planck al universo observable) y «La misma Luna» (por qué todo el planeta ve la misma fase y cada lugar la ve girada). Vendrán otras: historia universal, relatividad, etc. Hablas con el autor del laboratorio, que tiene perfil técnico y prefiere respuestas directas y decisiones argumentadas.
 
 ## Qué hay en el proyecto y cómo usarlo
 
 - `README.md`: visión, sistema de diseño compartido, arquitectura común, flujo de trabajo e índice de exposiciones. Léelo antes de proponer o construir nada.
-- Una exposición = un prefijo. Hoy: `escalas-*` (datos, iconos, lógica, estilos, plantilla, build, comprobaciones y `escalas-NOTAS.md` con las decisiones y cómo ampliarla).
+- Una exposición = un prefijo. Hoy: `escalas-*` y `luna-*` (datos, lógica, estilos, plantilla, build, comprobaciones y sus `*-NOTAS.md` con las decisiones y cómo ampliarlas; `luna-*` añade astronomía y rasterizado en archivos propios y una tabla de referencia para comprobarlos).
 - Cuando se pida ampliar o cambiar una exposición, trabaja sobre sus archivos fuente, nunca sobre el HTML ensamblado. Cuando se pida una exposición nueva, copia el patrón de arquitectura del README y crea un prefijo nuevo.
 
 ## Principios

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La misma Luna</title>
+<meta name="description" content="Todo el planeta ve la misma fase de la Luna, pero cada lugar la ve girada de una manera. Mueve a un observador por la Tierra y compruébalo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="neb" aria-hidden="true"></div>
+<div id="stage" tabindex="0" role="group" aria-label="Simulador. Arrastra al observador sobre la Tierra o muévelo con las flechas; la rueda del ratón y la regla inferior cambian el instante."></div>
+<p id="live" class="sr" aria-live="polite"></p>
+
+<header class="top">
+  <div class="brand">
+    <h1>La misma Luna</h1>
+    <p class="sub">Todo el planeta ve la misma fase. Lo que cambia de un lugar a otro es cómo aparece girada.</p>
+  </div>
+  <nav class="tools" aria-label="Herramientas">
+    <button class="ib" id="b-places" title="Elegir un lugar (/)" aria-label="Elegir un lugar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button>
+    <button class="ib" id="b-field" title="Mostrar cómo se ve la Luna desde todo el disco (l)" aria-label="Lunas sobre la Tierra" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5.2a3.6 3.6 0 1 0 3.9 3.9A2.9 2.9 0 0 1 9 5.2z"/><path d="M17.5 12.7a3.3 3.3 0 1 0 3.6 3.6 2.7 2.7 0 0 1-3.6-3.6z"/><path d="M5.2 15.4a2.6 2.6 0 1 0 2.9 2.9 2.1 2.1 0 0 1-2.9-2.9z"/></svg></button>
+    <button class="ib" id="b-compare" title="Comparar dos lugares (c)" aria-label="Comparar dos lugares" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/></svg></button>
+    <button class="ib" id="b-tour" title="Recorrido guiado (r)" aria-label="Recorrido guiado" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V5.5l14 4-14 4"/></svg></button>
+    <button class="ib" id="b-data" title="Datos del instante (d)" aria-label="Datos del instante" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></svg></button>
+    <button class="ib" id="b-help" title="Ayuda (?)" aria-label="Ayuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
+  </nav>
+</header>
+
+<div class="cap" id="cap-earth"><b>La Tierra vista desde la Luna</b><span>En el centro, la Luna está en el cénit; en el borde, en el horizonte.</span></div>
+<div class="cap sky" id="cap-a"><b></b><span class="when"></span><span class="where"></span></div>
+<div class="cap sky" id="cap-b" hidden><b></b><span class="when"></span><span class="where"></span></div>
+<div class="cap" id="cap-cmp" hidden></div>
+<button class="go" id="go-a" hidden>Ir a cuando sale</button>
+<button class="go" id="go-b" hidden>Ir a cuando sale</button>
+
+<div class="bottom">
+  <div class="readout">
+    <div class="phase"><div class="phase-name" id="ph-name"></div><div class="phase-sub" id="ph-sub"></div></div>
+    <div class="tctl" role="group" aria-label="Instante">
+      <button class="tb" id="t-dm" title="Un día antes" aria-label="Un día antes">−1 d</button>
+      <button class="tb" id="t-hm" title="Una hora antes (−)" aria-label="Una hora antes">−1 h</button>
+      <button class="ib sm" id="t-play" title="Dejar pasar el tiempo (espacio)" aria-label="Dejar pasar el tiempo" aria-pressed="false"><svg id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg id="i-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+      <button class="tb" id="t-hp" title="Una hora después (+)" aria-label="Una hora después">+1 h</button>
+      <button class="tb" id="t-dp" title="Un día después" aria-label="Un día después">+1 d</button>
+      <button class="tb now" id="t-now" title="Volver al instante actual (Inicio)" aria-pressed="true">Ahora</button>
+    </div>
+    <div class="clock"><div class="big" id="ck-big"></div><div class="sm" id="ck-sub"></div></div>
+  </div>
+  <div id="ruler" tabindex="0" role="slider" aria-label="Instante. Arrastra o usa las flechas para avanzar y retroceder en el tiempo" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext=""></div>
+</div>
+
+<aside id="panel" aria-label="Panel">
+  <button class="x" id="p-close" aria-label="Cerrar panel">×</button>
+  <div id="p-data" hidden>
+    <h2>Datos del instante</h2>
+    <div class="p-box"><div class="big" id="d-frac"></div><div class="sm" id="d-phase"></div></div>
+    <h3 id="d-place"></h3>
+    <dl class="kv" id="d-obs"></dl>
+    <h3>La regla del punto sublunar</h3>
+    <p class="note" id="d-rule"></p>
+    <dl class="kv" id="d-geo"></dl>
+    <h3>Ir a una fase</h3>
+    <div class="chips" id="d-jump">
+      <button class="chip-f" data-ph="0">Luna nueva</button><button class="chip-f" data-ph="90">Cuarto creciente</button><button class="chip-f" data-ph="180">Luna llena</button><button class="chip-f" data-ph="270">Cuarto menguante</button>
+    </div>
+    <p class="note">Cálculo propio a partir de series abreviadas. Frente a efemérides de referencia, la posición de la Luna se desvía unos 10″ como mucho y el giro del disco, menos de 0,1°. Las alturas incluyen la refracción atmosférica estándar.</p>
+  </div>
+  <div id="p-tour" hidden>
+    <p class="step" id="s-n"></p>
+    <h2 id="s-t"></h2>
+    <p id="s-d"></p>
+    <div class="p-actions"><button class="btn ghost" id="s-prev">Anterior</button><button class="btn" id="s-next">Siguiente</button><button class="btn ghost" id="s-demo" hidden></button></div>
+  </div>
+</aside>
+
+<div id="hint">Arrastra al observador sobre la Tierra. La rueda y la regla inferior mueven el tiempo.</div>
+
+<dialog id="d-places" aria-label="Elegir un lugar">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>La misma Luna, ahora, desde…</h2>
+  <p id="pl-sub"></p>
+  <div class="res-list" id="pl-list"></div>
+</dialog>
+
+<dialog id="d-help" class="help" aria-label="Ayuda">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Cómo se usa</h2>
+  <p>El globo es la Tierra vista desde la Luna: contiene justo los lugares que tienen la Luna sobre el horizonte. La otra ventana es el cielo del observador, con su vertical hacia arriba. Allí la Luna aparece muy ampliada (en el cielo real mide medio grado), pero su tamaño cambia de verdad entre el perigeo y el apogeo.</p>
+  <dl>
+    <dt>Arrastrar sobre la Tierra</dt><dd>Mover al observador</dd>
+    <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Moverlo 2° hacia el oeste, el este, el norte o el sur (con <kbd>Mayús</kbd>, 10°)</dd>
+    <dt>Rueda o regla inferior</dt><dd>Avanzar y retroceder en el tiempo</dd>
+    <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Una hora después o antes</dd>
+    <dt><kbd>Av Pág</kbd> <kbd>Re Pág</kbd></dt><dd>Un día después o antes</dd>
+    <dt><kbd>Espacio</kbd></dt><dd>Dejar pasar el tiempo (una hora por segundo)</dd>
+    <dt><kbd>Inicio</kbd></dt><dd>Volver al instante actual</dd>
+    <dt><kbd>/</kbd></dt><dd>Elegir un lugar</dd>
+    <dt><kbd>l</kbd> <kbd>c</kbd> <kbd>d</kbd> <kbd>r</kbd></dt><dd>Lunas sobre la Tierra, comparar dos lugares, datos, recorrido</dd>
+    <dt><kbd>Esc</kbd></dt><dd>Cerrar paneles y ventanas</dd>
+  </dl>
+  <h3>Qué es exacto y qué no</h3>
+  <p>Las posiciones del Sol y la Luna se calculan en tu navegador con series abreviadas: comparadas con efemérides de referencia entre 1950 y 2075, la Luna se desvía unos 10 segundos de arco como mucho y el giro del disco, menos de una décima de grado. Las horas de salida y puesta suponen un horizonte despejado al nivel del mar y la refracción estándar: pueden diferir un par de minutos de las reales.</p>
+  <p>La Tierra se dibuja con costas simplificadas (Natural Earth, 1:110 millones). El relieve de la Luna es un dibujo esquemático con los mares en su sitio, no una fotografía. Las horas son las de tu dispositivo, salvo las que acompañan a una ciudad, que usan su hora oficial; en un lugar sin ciudad se indica la hora solar media.</p>
+</dialog>
+
+<script>
+{{DATA}}
+</script>
+<script>
+{{MAPA}}
+</script>
+<script>
+{{ASTRO}}
+</script>
+<script>
+{{RENDER}}
+</script>
+<script>
+{{APP}}
+</script>
+</body>
+</html>
