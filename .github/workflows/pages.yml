@@ -37,6 +37,11 @@ jobs:
           node --check luna/luna-render.js
           node --check luna/luna-app.js
           node luna/luna-check.js
+          node --check espectro/espectro-fis.js
+          node --check espectro/espectro-data.js
+          node --check espectro/espectro-app.js
+          node --check espectro/espectro-atm-gen.js
+          node espectro/espectro-check.js
 
       # Raíz del sitio = site/ (portada); cada exposición en su carpeta con index.html → URL estable /<exposición>/
       - name: Ensamblar el sitio
@@ -45,6 +50,7 @@ jobs:
           cp -r site/. _site/
           node escalas/escalas-build.js _site/ordenes-de-magnitud/index.html
           node luna/luna-build.js _site/la-misma-luna/index.html
+          node espectro/espectro-build.js _site/el-espectro/index.html
 
       - uses: actions/upload-pages-artifact@v5
         with:

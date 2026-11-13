@@ -1,6 +1,6 @@
 # Laboratorio digital
 
-Colección de exposiciones interactivas sobre ciencia y conocimiento: pequeñas aplicaciones web originales, autocontenidas y pensadas para explorar una idea de forma directa. La primera es **Órdenes de magnitud**, un zoom continuo de la longitud de Planck al universo observable con más de cien objetos a escala. La segunda, **La misma Luna**, muestra por qué todo el planeta ve la misma fase y cada lugar la ve girada de una manera.
+Colección de exposiciones interactivas sobre ciencia y conocimiento: pequeñas aplicaciones web originales, autocontenidas y pensadas para explorar una idea de forma directa. La primera es **Órdenes de magnitud**, un zoom continuo de la longitud de Planck al universo observable con más de cien objetos a escala. La segunda, **La misma Luna**, muestra por qué todo el planeta ve la misma fase y cada lugar la ve girada de una manera. La tercera, **El espectro**, recorre toda la luz, de la radio a los rayos gamma, y enseña qué parte consigue atravesar la atmósfera.
 
 ## Índice de exposiciones
 
@@ -8,6 +8,7 @@ Colección de exposiciones interactivas sobre ciencia y conocimiento: pequeñas 
 |---|---|---|---|
 | `escalas-` | Órdenes de magnitud | v1, funcional | [`/ordenes-de-magnitud/`](https://adelrvsrz-code.github.io/laboratorio-digital/ordenes-de-magnitud/) |
 | `luna-` | La misma Luna | v1, funcional | [`/la-misma-luna/`](https://adelrvsrz-code.github.io/laboratorio-digital/la-misma-luna/) |
+| `espectro-` | El espectro | v1, funcional | [`/el-espectro/`](https://adelrvsrz-code.github.io/laboratorio-digital/el-espectro/) |
 
 El sitio se publica en GitHub Pages, en <https://adelrvsrz-code.github.io/laboratorio-digital/>, desde la rama `main`. Cada exposición vive en su propia ruta y la raíz es la portada del laboratorio, con una entrada por exposición: así los enlaces a una exposición no cambian cuando llega la siguiente. Los enlaces antiguos a la raíz con un objeto de Órdenes de magnitud (`…/#tierra`) se redirigen a su exposición.
 
@@ -39,6 +40,16 @@ luna/                        exposición «La misma Luna»
   luna-check.js              comprobaciones sin navegador, incluida la astronomía contra luna-ref.json
   luna-ref.json              tabla de referencia (generada por luna-ref-gen.js; solo para las comprobaciones)
   luna-NOTAS.md              decisiones de diseño y guía para ampliar
+espectro/                    exposición «El espectro»
+  espectro-data.js           bandas, perfil de la atmósfera, catálogo de fichas, recorrido
+  espectro-fis.js            física: conversiones, interpolación del perfil, color (funciones puras)
+  espectro-app.js            lógica: formato, estado, dibujo, entrada, ficha, buscador
+  espectro-styles.css        estilos y tokens
+  espectro-template.html     esqueleto HTML con marcadores {{CSS}} {{FIS}} {{DATA}} {{APP}}
+  espectro-build.js          ensambla todo en un único HTML
+  espectro-check.js          comprobaciones sin navegador (catálogo, tablas y física, incluido el perfil contra su generador)
+  espectro-atm-gen.js        herramienta de desarrollo: calcula el tramo de rayos X y gamma del perfil de la atmósfera
+  espectro-NOTAS.md          decisiones de diseño y guía para ampliar
 site/                        raíz del sitio publicado (portada con una entrada por exposición)
 .github/workflows/pages.yml  comprueba, ensambla y despliega en GitHub Pages en cada push a main
 dist/                        HTML ensamblados en local (ignorado por git: el despliegue los regenera)
@@ -81,14 +92,14 @@ Texto: español de España, frase corta, sin relleno. Coma decimal, espacio fino
 
 ## Arquitectura común de una exposición
 
-1. **Plantilla** (`*-template.html`): esqueleto con `<meta viewport … viewport-fit=cover>`, enlace a Google Fonts y un marcador por archivo fuente: `{{CSS}}`, `{{DATA}}`, `{{ICONS}}`, `{{APP}}` en Órdenes de magnitud; `{{CSS}}`, `{{DATA}}`, `{{MAPA}}`, `{{ASTRO}}`, `{{RENDER}}`, `{{APP}}` en La misma Luna.
+1. **Plantilla** (`*-template.html`): esqueleto con `<meta viewport … viewport-fit=cover>`, enlace a Google Fonts y un marcador por archivo fuente: `{{CSS}}`, `{{DATA}}`, `{{ICONS}}`, `{{APP}}` en Órdenes de magnitud; `{{CSS}}`, `{{DATA}}`, `{{MAPA}}`, `{{ASTRO}}`, `{{RENDER}}`, `{{APP}}` en La misma Luna; `{{CSS}}`, `{{FIS}}`, `{{DATA}}`, `{{APP}}` en El espectro.
 2. **Datos** (`*-data.js`): contenido como estructuras JS simples, separadas de la lógica. Es el archivo que más se edita.
 3. **Iconos** (`*-icons.js`): generadores SVG propios con un `viewBox` fijo de `0 0 100 100`; incluyen un tipo genérico `image` para incrustar imágenes propias como data URI.
 4. **Lógica** (`*-app.js`): un IIFE con las secciones formato, datos, estado, distribución, dibujo, HUD, entrada, paneles, arranque.
 5. **Estilos** (`*-styles.css`): tokens arriba, luego escenario, cabecera, pie, paneles, diálogos, varios, media queries.
 6. **Build** (`*-build.js`): solo concatena; no hay transpilación ni minificado. Salida por defecto en `dist/`; el despliegue le pasa como argumento la ruta pública (`_site/<ruta>/index.html`).
 7. **Comprobaciones** (`*-check.js`): validaciones del contenido ejecutables con Node sin navegador y sin instalar nada.
-8. **Cálculo y rasterizado**, cuando la exposición los necesita (`luna-astro.js`, `luna-render.js`): funciones puras, sin DOM, en archivos propios para poder comprobarlas en Node. Si hay un resultado de referencia contra el que medirlas, se guarda como tabla en el repositorio (`luna-ref.json`) y la herramienta que la generó queda fuera de la exposición.
+8. **Cálculo y rasterizado**, cuando la exposición los necesita (`luna-astro.js`, `luna-render.js`, `espectro-fis.js`): funciones puras, sin DOM, en archivos propios para poder comprobarlas en Node. Si hay un resultado de referencia contra el que medirlas, se guarda como tabla en el repositorio (`luna-ref.json`) y la herramienta que la generó queda fuera de la exposición; si el cálculo de referencia no necesita nada externo, la comprobación lo repite directamente (`espectro-atm-gen.js`).
 
 Rendimiento: lo que se anima de forma continua se dibuja en un único `canvas` con mapas de bits pre-rasterizados (ver `escalas-NOTAS.md`). El DOM queda para la interfaz. Nada de `will-change` en muchos elementos, filtros CSS animados, `backdrop-filter` o `mix-blend-mode` a pantalla completa: en entornos con GPU compartida (el visor de artefactos de Claude, portátiles modestos) dejan mosaicos sin pintar.
 
@@ -121,17 +132,20 @@ const { chromium } = require('playwright');
 })();
 ```
 
+Sin red, el navegador sin cabeza cae en la tipografía de respaldo y los rótulos miden distinto que en producción. Para que las capturas valgan, se sirven Syne e Instrument Sans en local (paquetes `@fontsource/syne` y `@fontsource/instrument-sans`, solo en el entorno de pruebas) respondiendo con `page.route` a la petición de Google Fonts, y se prueba también a escala 125 % (`deviceScaleFactor: 1.25`), que es la habitual en Windows.
+
 ## Hoja de ruta
 
 - **Historia universal.** Candidata natural tras Escalas: una línea de tiempo logarítmica del Big Bang a hoy, con la misma mecánica de zoom (el tiempo también abarca decenas de órdenes de magnitud) y «reinos» (cosmológico, geológico, biológico, humano).
 - **Relatividad.** Pequeños experimentos: dilatación del tiempo y contracción de longitudes con un deslizador de velocidad, diagramas de Minkowski, el reloj de luz, la paradoja de los gemelos. Elemento memorable por decidir.
 - **Mejoras de Escalas.** Modo bilingüe (los textos ya están aislados en `escalas-data.js`), más objetos (ver NOTAS), imágenes reales en objetos concretos con el tipo `image`.
 - **Mejoras de La misma Luna.** Usar la ubicación del visitante, comparar dos lugares cada uno en su anochecer, el Sol y los eclipses en el cielo del observador (ver NOTAS).
-- **Base compartida.** Ya hay dos exposiciones: toca extraer a un archivo común los tokens, los formateadores de números y la plantilla de cabecera y pie, que hoy están duplicados en `escalas-*` y `luna-*`.
+- **Mejoras de El espectro.** Sustituir el tramo infrarrojo del perfil, que es un esquema, por uno derivado de un modelo de transmisión; siglas de la UIT en el dial; la radiación que sale de la Tierra; curvas de cuerpo negro con deslizador de temperatura (ver NOTAS).
+- **Base compartida.** Ya hay tres exposiciones: toca extraer a un archivo común los tokens, los formateadores de números y la plantilla de cabecera y pie, que hoy están duplicados en `escalas-*`, `luna-*` y `espectro-*`.
 
 ## Licencia
 
 - **Código** (lógica, estilos, plantillas, scripts de build y comprobación): [MIT](LICENSE). Úsalo, modifícalo y redistribúyelo conservando el aviso de autoría.
 - **Contenidos** (textos del catálogo, iconos, ilustraciones, notas y este README): [CC BY-SA 4.0](LICENSE-CONTENIDOS.md). Cita «Laboratorio digital, Adel Rivas Suárez», enlaza al repositorio y publica las adaptaciones con la misma licencia.
 - El HTML ensamblado (el de `dist/` en local y el publicado) combina ambas: su código va bajo MIT y sus contenidos bajo CC BY-SA 4.0.
-- **Datos de terceros.** Las costas de `luna/luna-mapa.js` proceden de [Natural Earth](https://www.naturalearthdata.com/) (dominio público). Las series astronómicas de `luna/luna-astro.js` son las publicadas por J. Meeus en «Astronomical Algorithms»; la implementación es propia.
+- **Datos de terceros.** Las costas de `luna/luna-mapa.js` proceden de [Natural Earth](https://www.naturalearthdata.com/) (dominio público). Las series astronómicas de `luna/luna-astro.js` son las publicadas por J. Meeus en «Astronomical Algorithms»; la implementación es propia. El tramo de rayos X y gamma del perfil atmosférico de `espectro/` se calcula con los coeficientes de atenuación del aire del NIST (Hubbell y Seltzer) y con la U.S. Standard Atmosphere 1976, ambos de dominio público.

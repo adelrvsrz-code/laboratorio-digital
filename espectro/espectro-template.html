@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El espectro</title>
+<meta name="description" content="Toda la luz, de las ondas de radio a los rayos gamma, y cuánta de ella consigue atravesar la atmósfera.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="wm" class="wm" aria-hidden="true"></div>
+<div id="stage" role="region" aria-label="Visor del espectro. Arrastra o usa las flechas para recorrer las frecuencias; más y menos para acercar o alejar."></div>
+
+<header class="top">
+  <div class="brand">
+    <h1>El espectro</h1>
+    <p class="sub">Toda la luz, de la radio a los rayos gamma, y la poca que llega al suelo.</p>
+  </div>
+  <nav class="tools" aria-label="Herramientas">
+    <button class="ib" id="b-search" title="Buscar (/)" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
+    <button class="ib" id="b-random" title="Ficha al azar (r)" aria-label="Ficha al azar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"/></svg></button>
+    <button class="ib" id="b-tour" title="Recorrido guiado (espacio)" aria-label="Recorrido guiado" aria-pressed="false"><svg id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg id="i-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+    <button class="ib" id="b-help" title="Ayuda (?)" aria-label="Ayuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg></button>
+  </nav>
+</header>
+
+<button class="arrow left" id="prev" aria-label="Ficha anterior (menor frecuencia)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+<button class="arrow right" id="next" aria-label="Ficha siguiente (mayor frecuencia)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+
+<div class="bottom">
+  <div class="readout" aria-live="off">
+    <div class="realm"><div class="realm-name" id="realm-name"></div><div class="realm-sub" id="realm-sub"></div></div>
+    <div class="zoom"><button class="ib sm" id="zout" aria-label="Alejar">−</button><button class="ib sm" id="zin" aria-label="Acercar">+</button></div>
+    <div class="scale"><div class="big" id="sc-big"></div><div class="sm"><span id="sc-lam"></span><span id="sc-like"></span></div><div class="sm" id="sc-ev"></div></div>
+  </div>
+</div>
+
+<aside id="panel" aria-live="polite">
+  <button class="x" id="p-close" aria-label="Cerrar ficha">×</button>
+  <div class="p-head"><div id="p-ico" class="p-ico"></div><div><h2 id="p-name"></h2><span class="chip" id="p-cat"></span></div></div>
+  <div class="p-size"><div class="big" id="p-size"></div><div class="sm" id="p-lam"></div><div class="sm" id="p-ev"></div></div>
+  <p id="p-cert"></p>
+  <p id="p-desc"></p>
+  <p id="p-like"></p>
+  <p id="p-atm"></p>
+  <div class="p-actions"><button class="btn" id="p-center">Centrar en el dial</button></div>
+</aside>
+
+<div id="tip" role="tooltip"></div>
+<div id="live" class="sr" role="status" aria-live="polite"></div>
+<div id="hint">Arrastra para recorrer el espectro. Pulsa un nombre para abrir su ficha.</div>
+
+<dialog id="d-search" aria-label="Buscar">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Buscar</h2>
+  <input type="search" id="q" placeholder="Escribe un nombre: wifi, Hubble, ozono…" autocomplete="off" spellcheck="false">
+  <div class="res-list" id="res"></div>
+</dialog>
+
+<dialog id="d-help" class="help" aria-label="Ayuda">
+  <button class="x" aria-label="Cerrar">×</button>
+  <h2>Qué estás viendo</h2>
+  <p>De izquierda a derecha, toda la radiación electromagnética ordenada por frecuencia: treinta órdenes de magnitud en escala logarítmica. De arriba abajo, la altitud. La luz llega del espacio y cada columna baja hasta donde la atmósfera la detiene; donde toca el suelo hay una ventana.</p>
+  <dl>
+    <dt>Arrastre o rueda</dt><dd>Recorrer el espectro</dd>
+    <dt>Pellizco, <kbd>Ctrl</kbd> + rueda, <kbd>+</kbd> <kbd>−</kbd></dt><dd>Acercar o alejar</dd>
+    <dt><kbd>←</kbd> <kbd>→</kbd>, <kbd>Intro</kbd></dt><dd>Ficha anterior o siguiente; abrir la que está bajo la aguja</dd>
+    <dt><kbd>Mayús</kbd> + <kbd>←</kbd> <kbd>→</kbd></dt><dd>Desplazar poco a poco</dd>
+    <dt><kbd>Inicio</kbd> <kbd>Fin</kbd> <kbd>0</kbd></dt><dd>Ir a un extremo o ver el espectro entero</dd>
+    <dt><kbd>Espacio</kbd></dt><dd>Recorrido guiado</dd>
+    <dt><kbd>/</kbd> <kbd>r</kbd></dt><dd>Buscar, ficha al azar</dd>
+    <dt><kbd>Esc</kbd></dt><dd>Cerrar fichas y ventanas</dd>
+  </dl>
+  <p style="margin-top:14px">La línea blanca marca dónde la atmósfera que queda por encima ha reducido la luz a algo más de un tercio. En los rayos X y gamma está calculada con datos de referencia; en el ultravioleta es una estimación, y en el infrarrojo y las ondas milimétricas, un esquema que sitúa las ventanas pero no afina la altura, que cambia con la humedad, la hora y el Sol.</p>
+  <p>La lluvia solo indica hasta dónde llega cada frecuencia, no cuánta luz hay en ella. El eje vertical está comprimido para que quepan el suelo y la órbita. Los colores son reales solo dentro de la luz visible. Las fronteras entre bandas son un convenio, y el dial acaba donde acaban los ejemplos, no el espectro.</p>
+</dialog>
+
+<script>
+{{FIS}}
+</script>
+<script>
+{{DATA}}
+</script>
+<script>
+{{APP}}
+</script>
+</body>
+</html>
