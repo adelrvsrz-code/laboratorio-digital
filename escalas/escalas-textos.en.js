@@ -174,7 +174,7 @@ const T = {
     'barrera': { n: 'Great Barrier Reef', sub: 'length', d: 'The largest structure built by living things: 2 300 kilometres of reefs raised by corals a few millimetres in size. It can be seen from space.' },
     'pluton': { n: 'Pluto', sub: 'diameter', d: 'Smaller than our Moon. In 2015 the New Horizons probe revealed nitrogen glaciers and a vast heart-shaped plain of ice.' },
     'luna': { n: 'Moon', sub: 'diameter', d: 'Our satellite: 3 474 kilometres, a little more than a quarter of the Earth. It drifts away from us by 3.8 centimetres every year.' },
-    'mercurio': { n: 'Mercury', sub: 'diameter', d: 'The smallest planet in the Solar System and the closest to the Sun. One day there lasts 59 Earth days.' },
+    'mercurio': { n: 'Mercury', sub: 'diameter', d: 'The smallest planet in the Solar System and the closest to the Sun. It takes 59 Earth days to turn once on its axis.' },
     'ganimedes': { n: 'Ganymede', sub: 'diameter', d: 'The largest moon in the Solar System, bigger than Mercury. Beneath its icy crust there is thought to be more water than in all of Earth’s oceans.' },
     'marte': { n: 'Mars', sub: 'diameter', d: 'Half the diameter of the Earth. It is home to Olympus Mons, the largest volcano in the Solar System, and to a canyon that would stretch right across Spain.' },
     'tierra': { n: 'Earth', sub: 'diameter', d: '12 742 kilometres in diameter. The only place in the universe where we know for certain there is life.' },

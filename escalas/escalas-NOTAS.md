@@ -104,6 +104,7 @@ Para usar una imagen propia: `i: ['image', { src: 'data:image/webp;base64,…', 
 - Miles sin salto al cargar, no en las fuentes. Un espacio fino sin salto escrito en el archivo es invisible y se pierde con facilidad; se teclea un espacio normal y `prose` lo convierte.
 - Pie en dos filas en móvil. Con el reino, los botones y la lectura en una sola fila no cabían cifras como «12 742 km» a 390 px y la lectura se salía de la pantalla. Probado a 320, 360, 390, 414 y 430 px con los 106 objetos en los dos idiomas.
 - La separación de textos se hizo sin cambio visible y se comprobó contra la versión anterior en el navegador: textos fijos, las 106 fichas, el buscador, 639 pares del comparador y 27 capturas idénticas píxel a píxel (escritorio, móvil y escritorio a escala 125 %), además de 750 000 valores de los formateadores. La única diferencia es un fallo corregido: con la cifra 1 se leía «1 millones» (Mitocondria ÷ Radiación gamma, o la lectura de escala al pasar por «1 millones de km»); ahora, «1 millón», «mil millones», «1 billón».
+- Dos correcciones de contenido salidas de la adaptación al inglés. Los rayos X no «rebotan» en los huesos: los huesos los absorben más que el tejido blando, y eso es lo que se ve en una radiografía. Y los 59 días de Mercurio son lo que tarda en girar sobre sí mismo (1 407,6 h de rotación sidérea), no lo que dura allí un día: de un amanecer al siguiente pasan 176 (4 222,6 h); las dos cifras, de la ficha de Mercurio del NSSDC de la NASA. La ficha dice ahora que tarda 59 días en dar una vuelta sobre sí mismo, que es lo que significaba el 59. Mercurio se cambió en los dos idiomas; los rayos X, solo en español, porque el inglés ya decía *are stopped by bone*.
 
 ## Límites conocidos
 
@@ -113,9 +114,11 @@ Para usar una imagen propia: `i: ['image', { src: 'data:image/webp;base64,…', 
 - Las fuentes de Google requieren red; sin ella se usa la tipografía del sistema.
 - Los tamaños que se muestran en años luz salen de convertir un dato en metros y enseñan más cifras de las que tiene: la ficha de Andrómeda dice «221 971 años luz» junto a una descripción que dice «unos 220 000». Se arreglaría guardando esos tamaños como múltiplos del año luz.
 - Las portadas del sitio (`site/`) son páginas escritas a mano, una por idioma: llevan el enlace a la otra versión, pero no el aviso.
+- Las descripciones de las fichas no llevan registro de contraste con fuentes primarias. Contrastado hasta ahora: la rotación y el día de Mercurio (ficha del NSSDC de la NASA).
 
 ## Ideas pendientes
 
 - Más objetos en los huecos grandes: entre 10⁻¹⁴ y 10⁻¹⁰ m (neutrino, escala electrodébil como cota), entre 10¹³ y 10¹⁵ m (cinturón de Kuiper, Voyager 1), más galaxias y cúmulos.
 - Modo «cabe en»: arrastrar un objeto sobre otro y ver cuántas veces cabe.
 - Compartir la vista actual con enlace (ya existe por objeto: `#id`).
+- Dudas de contenido abiertas tras la revisión del inglés, sin aplicar: Andrómeda como «el objeto más lejano visible a simple vista» (con cielos muy oscuros también se ve M33, algo más lejana); el cañón de Marte que «cruzaría España» (Valles Marineris mide unos 4 000 km, casi cuatro veces el ancho de la Península); y el agua como «pequeño imán» (es un dipolo eléctrico).
