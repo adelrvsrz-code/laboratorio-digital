@@ -28,9 +28,13 @@ jobs:
       - name: Comprobar fuentes
         run: |
           node --check base/base-fmt.js
+          node --check base/base-idioma.js
+          node --check base/base-cifras.js
+          node --check base/base-build.js
           node base/base-check.js
           node --check escalas/escalas-data.js
           node --check escalas/escalas-textos.es.js
+          node --check escalas/escalas-textos.en.js
           node --check escalas/escalas-icons.js
           node --check escalas/escalas-app.js
           node escalas/escalas-check.js
@@ -46,12 +50,13 @@ jobs:
           node --check espectro/espectro-atm-gen.js
           node espectro/espectro-check.js
 
-      # Raíz del sitio = site/ (portada); cada exposición en su carpeta con index.html → URL estable /<exposición>/
+      # Raíz del sitio = site/ (portada en español y, en site/en/, en inglés); cada exposición en su carpeta con index.html → URL estable.
+      # Las exposiciones con varios idiomas se ensamblan con --sitio: español en /<exposición>/ e inglés en /en/<exhibit>/.
       - name: Ensamblar el sitio
         run: |
           mkdir -p _site
           cp -r site/. _site/
-          node escalas/escalas-build.js _site/ordenes-de-magnitud/index.html
+          node escalas/escalas-build.js --sitio _site
           node luna/luna-build.js _site/la-misma-luna/index.html
           node espectro/espectro-build.js _site/el-espectro/index.html
 

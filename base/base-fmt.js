@@ -13,11 +13,13 @@ const sup = n => String(n).split('').map(c => SUP[c] || c).join('');
    of         lo que va entre la palabra de escala y lo que se cuenta: «5 millones de km», «5 million km»
    times      «vez» y «veces»
    u          unidades que se escriben con palabra o cambian con el idioma: [singular, plural]
-   El español usa la escala larga (billón = 10¹²) y el inglés la corta (billion = 10⁹). */
+   El español usa la escala larga (billón = 10¹²) y el inglés la corta (billion = 10⁹). En español no hay escalón de
+   «mil millones»: con cifras se escribe «93 000 millones», porque la Ortografía solo admite mezclar cifra y palabra
+   con sustantivos como millón o billón, no con «mil». */
 const REG = {
   es: {
     dec: ',', mil: NB, of: ' de ', times: ['vez', 'veces'],
-    scale: [[1e24, '1 cuatrillón', 'cuatrillones'], [1e18, '1 trillón', 'trillones'], [1e12, '1 billón', 'billones'], [1e9, 'mil millones', 'mil millones'], [1e6, '1 millón', 'millones']],
+    scale: [[1e24, '1 cuatrillón', 'cuatrillones'], [1e18, '1 trillón', 'trillones'], [1e12, '1 billón', 'billones'], [1e6, '1 millón', 'millones']],
     u: {
       ly: ['año luz', 'años luz'], au: ['UA', 'UA'], km: ['km', 'km'],
       as: ['attosegundo', 'attosegundos'], fs: ['femtosegundo', 'femtosegundos'], ps: ['picosegundo', 'picosegundos'], ns: ['nanosegundo', 'nanosegundos'],
@@ -62,12 +64,12 @@ function make(lang) {
     return (ms === '1' ? '' : ms + ' × ') + '10' + sup(e);
   }
   /* tres formas de redondear. auto: más decimales cuanto menor es la cifra (Órdenes de magnitud) */
+  function roundAuto(x) {
+    const a = Math.abs(x);
+    return a >= 100 ? Math.round(x) : a >= 10 ? Math.round(x * 10) / 10 : a >= 1 ? Math.round(x * 100) / 100 : Number(x.toPrecision(3));
+  }
   function auto(x) {
-    const a = Math.abs(x); let s;
-    if (a >= 100) s = Math.round(x).toString();
-    else if (a >= 10) s = (Math.round(x * 10) / 10).toString();
-    else if (a >= 1) s = (Math.round(x * 100) / 100).toString();
-    else s = Number(x.toPrecision(3)).toString();
+    const s = roundAuto(x).toString();
     return s.includes('e') ? sci(x) : num(s);
   }
   /* fixed: decimales fijos y signo menos tipográfico (La misma Luna) */
@@ -81,26 +83,33 @@ function make(lang) {
     return s.includes('e') ? sci(x, n) : num(s);
   }
 
-  const rung = x => L.scale.find(r => x >= r[0]);
   const unitOf = u => L.u[u] || [u, u];
-  /* cifra con su palabra de escala: «5 millones», «1 millón», «mil millones»; por debajo del millón, solo la cifra */
-  function fmtCount(r) {
-    if (r < 1e6) return auto(r);
-    if (r >= SCI_FROM) return sci(r).replace(' × ', '·');
-    const [k, one, word] = rung(r), n = auto(r / k);
-    return n === '1' ? one : n + ' ' + word;
+  /* Cifra con su palabra de escala: [texto, si lleva palabra]. «5 millones», «1 millón», «93 000 millones»; por debajo
+     del millón, solo la cifra. Ante una palabra de escala la cifra lleva como mucho tres significativas («120 000
+     billones», no «120 208»), y si al redondear alcanza el escalón siguiente se pasa a él («1 billón», no «1 000 000
+     millones»). Desde SCI_FROM, notación científica compacta. */
+  function count(r) {
+    if (r < 1e6 && roundAuto(r) < 1e6) return [auto(r), false];
+    const top = L.scale[0][0] * 1e6 > SCI_FROM ? SCI_FROM : L.scale[0][0] * 1e6;
+    for (let i = L.scale.length - 1; i >= 0; i--) {
+      const k = L.scale[i][0], next = i ? L.scale[i - 1][0] : top;
+      if (r >= next) continue;
+      const m = r / k, v = m >= 999.5 ? Number(m.toPrecision(3)) : roundAuto(m);
+      if (v * k >= next) continue;                           /* el redondeo alcanza el escalón siguiente */
+      return [v === 1 ? L.scale[i][1] : num(v.toString()) + ' ' + L.scale[i][2], true];
+    }
+    return [sci(r).replace(' × ', '·'), false];
   }
+  const fmtCount = r => count(r)[0];
   /* cifra y unidad: «4,2 años luz», «150 millones de km», «1 UA» */
   function withWord(x, unit) {
-    const [sg, pl] = unitOf(unit);
-    if (x >= 1e6) return fmtCount(x) + L.of + pl;
-    const n = auto(x);
-    return n + ' ' + (n === '1' ? sg : pl);
+    const [sg, pl] = unitOf(unit), [c, word] = count(x);
+    return word ? c + L.of + pl : c + ' ' + (c === '1' ? sg : pl);
   }
   /* «3 veces», «5 millones de veces» */
   function fmtTimes(r) {
-    const c = fmtCount(r);
-    return c + (r >= 1e6 && r < SCI_FROM ? L.of : ' ') + (c === '1' ? L.times[0] : L.times[1]);
+    const [c, word] = count(r);
+    return c + (word ? L.of : ' ') + (c === '1' ? L.times[0] : L.times[1]);
   }
   /* longitud en metros con la unidad más legible, del attómetro a los años luz */
   function fmtLen(m) {
@@ -118,7 +127,11 @@ function make(lang) {
     return y < .999 ? withWord(s / 86400, 'd') : withWord(y, 'y');
   }
 
-  return { lang, num, sci, sup, auto, fixed, sig, fmtCount, fmtMult: fmtCount, fmtTimes, withWord, fmtLen, fmtTime };
+  /* cifras escritas a mano dentro de un texto: el espacio de los miles («13 800 millones») pasa a ser fino y sin salto,
+     para que la cifra no se parta entre dos líneas. En las fuentes se escribe con espacio normal. */
+  const prose = s => s.replace(/(\d) (?=\d{3}(?!\d))/g, '$1' + L.mil);
+
+  return { lang, num, sci, sup, auto, fixed, sig, fmtCount, fmtMult: fmtCount, fmtTimes, withWord, fmtLen, fmtTime, prose };
 }
 make.REG = REG;                          /* a la vista para las comprobaciones */
 return make;

@@ -86,7 +86,8 @@ h1,h2,h3{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:-.
 .chip{display:inline-flex;align-items:center;gap:7px;margin-top:6px;font-size:12.5px;color:var(--dust)}
 .chip::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
 .p-size{margin:16px 0 12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
-.p-size .big{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.p-size .big{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums;text-wrap:balance}
+.p-size .big.l{font-size:22px}
 .p-size .sm{font-size:12.5px;color:var(--dust);margin-top:2px;font-variant-numeric:tabular-nums}
 #p-desc{margin:0 0 10px;font-size:15px;line-height:1.5}
 #p-light{margin:0 0 16px;font-size:13px;color:var(--dust)}
@@ -154,13 +155,21 @@ kbd{font-family:inherit;font-size:12.5px;padding:1px 7px;border-radius:6px;borde
   .bottom{padding-left:12px;padding-right:12px}
   .realm-sub{display:none}
   .scale .sm:last-child{display:none}
-  .scale .big{font-size:20px;white-space:nowrap}
+  /* pie en dos filas: reino y botones arriba; abajo, notación científica y lectura a todo el ancho, para que la cifra no se corte */
+  .readout{flex-wrap:wrap;align-items:center;gap:2px 10px}
+  .realm{flex:1 1 0;min-width:0}
+  .realm-name{line-height:1.15}
+  .scale{flex:1 1 100%;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .scale .sm{order:-1;flex:none}
+  .scale .big{flex:0 1 auto;min-width:0;font-size:min(20px,6vw);text-wrap:balance}
+  .scale .big.m{font-size:min(17px,5.2vw)}
+  .scale .big.l{font-size:min(15px,4.5vw)}
   #ruler{height:50px}
-  #panel{top:auto;left:10px;right:10px;bottom:calc(132px + env(safe-area-inset-bottom,0px));width:auto;max-height:44vh;transform:translateY(24px);padding:16px}
+  #panel{top:auto;left:10px;right:10px;bottom:calc(150px + env(safe-area-inset-bottom,0px));width:auto;max-height:44vh;transform:translateY(24px);padding:16px}
   #panel.open{transform:none}
   .p-ico{width:56px;height:56px}
   #p-name{font-size:18px}
-  #hint{white-space:normal;text-align:center;max-width:calc(100vw - 40px);border-radius:16px}
+  #hint{white-space:normal;text-align:center;max-width:calc(100vw - 40px);border-radius:16px;bottom:calc(168px + env(safe-area-inset-bottom,0px))}
   .cmp-vis{height:180px}
 }
 @media (prefers-reduced-motion:reduce){

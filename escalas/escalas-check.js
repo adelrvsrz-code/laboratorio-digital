@@ -1,7 +1,9 @@
-/* Comprueba la integridad de «Órdenes de magnitud» sin navegador: catálogo, iconos, textos de cada idioma y plantilla.
+/* Comprueba la integridad de «Órdenes de magnitud» sin navegador: catálogo, iconos, textos de cada idioma y plantilla,
+   y que cada texto traducido dice las mismas cifras que el original.
    Uso: node escalas-check.js */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const { loadTexts } = require('../base/base-build.js');
+const { sameFigures } = require('../base/base-cifras.js');
 const here = __dirname, read = f => fs.readFileSync(path.join(here, f), 'utf8');
 let bad = 0; const fail = (...a) => { console.log('ERROR:', ...a); bad++; };
 const same = (a, b) => a.length === b.length && a.every(x => b.includes(x));
@@ -41,7 +43,7 @@ const base = {}; vm.createContext(base);
 vm.runInContext(fs.readFileSync(path.join(here, '..', 'base', 'base-fmt.js'), 'utf8') + '\nthis.BASEFMT = BASEFMT;', base);
 const langs = fs.readdirSync(here).map(f => (f.match(/^escalas-textos\.([a-z]{2})\.js$/) || [])[1]).filter(Boolean).sort((a, b) => (b === 'es') - (a === 'es') || a.localeCompare(b));
 if (langs[0] !== 'es') fail('falta escalas-textos.es.js');
-const texts = {}, summary = [];
+const texts = {}, summary = [], figSummary = [];
 for (const lang of langs) {
   const file = 'escalas-textos.' + lang + '.js', T = texts[lang] = loadTexts(path.join(here, file)), ref = texts.es;
   const err = (...a) => fail(file + ':', ...a);
@@ -74,11 +76,20 @@ for (const lang of langs) {
     if (!same(Object.keys(T.f), Object.keys(ref.f))) err('f no tiene las mismas frases que el español');
     for (const k of Object.keys(ref.f)) if (T.f[k] && T.f[k].length !== ref.f[k].length) err('f.' + k, 'no recibe los mismos datos que en español');
     for (const o of OBJECTS) if (T.obj[o.id] && ref.obj[o.id] && ('lab' in T.obj[o.id]) !== ('lab' in ref.obj[o.id])) err(o.id, 'lleva lab en un idioma y no en el otro');
+    /* las cifras de cada texto deben ser las del original, con su formato y su escala (billón = 10¹², billion = 10⁹) */
+    const pairs = Object.keys(ref.ui).map(k => ['ui «' + k + '»', ref.ui[k], T.ui[k]]).concat(Object.keys(ref.cats).map(k => ['cats.' + k, ref.cats[k], T.cats[k]]));
+    for (const id of realmIds) if (T.realms[id]) pairs.push(['realms.' + id, ref.realms[id].join(' | '), T.realms[id].join(' | ')]);
+    for (const o of OBJECTS) for (const k of ['n', 'sub', 'd', 'lab']) if (ref.obj[o.id] && T.obj[o.id] && k in ref.obj[o.id] && k in T.obj[o.id]) pairs.push([o.id + '.' + k, ref.obj[o.id][k], T.obj[o.id][k]]);
+    let figs = 0;
+    for (const [what, a, b] of pairs) { if (typeof a !== 'string' || typeof b !== 'string') continue; figs++; const d = sameFigures(a, 'es', b, lang); if (d) err(what, 'no dice las mismas cifras que en español:', JSON.stringify(d[0]), 'frente a', JSON.stringify(d[1])); }
+    figSummary.push(`${lang} frente a es en ${figs} textos`);
   }
   summary.push(`${lang} (${Object.keys(T.ui).length} de interfaz, ${Object.keys(T.f).length} frases, ${Object.keys(T.obj).length} fichas)`);
 }
 
 const cats = {}; for (const o of OBJECTS) cats[o.c] = (cats[o.c] || 0) + 1;
 console.log('objetos:', OBJECTS.length, cats);
-console.log('textos:', summary.join(', '), bad ? `PROBLEMAS: ${bad}` : 'sin problemas');
+console.log('textos:', summary.join(', '));
+if (figSummary.length) console.log('cifras:', figSummary.join(', '));
+console.log(bad ? `PROBLEMAS: ${bad}` : 'sin problemas');
 process.exit(bad ? 1 : 0);

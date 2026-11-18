@@ -10,12 +10,13 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
 
 /* ---------- formato ---------- */
 /* Los formateadores son los de la base compartida (base-fmt.js), en el idioma del archivo de textos. */
-const { sci, sup, fmtLen, fmtTime, fmtCount, fmtTimes, fmtMult } = BASEFMT(T.lang);
+const { sci, sup, fmtLen, fmtTime, fmtCount, fmtTimes, fmtMult, prose } = BASEFMT(T.lang);
 
 /* ---------- datos ---------- */
-/* Cada objeto recibe los textos de su idioma: nombre, qué mide el tamaño, descripción y, si lo hay, rótulo del icono. */
+/* Cada objeto recibe los textos de su idioma: nombre, qué mide el tamaño, descripción (con los miles de sus cifras en
+   espacio fino sin salto) y, si lo hay, rótulo del icono. */
 for (const o of OBJECTS) {
-  const t = T.obj[o.id]; o.n = t.n; o.sub = t.sub; o.d = t.d;
+  const t = T.obj[o.id]; o.n = t.n; o.sub = t.sub; o.d = prose(t.d);
   if (t.lab) o.i = [o.i[0], Object.assign({}, o.i[1], { label: t.lab })];
 }
 const ALL = OBJECTS.slice().sort((a, b) => a.s - b.s);
@@ -120,7 +121,7 @@ function layout() {
   for (let i = 1; i < n; i++) xs[i] = xs[i - 1] + sw[i - 1] / 2 + 26 + .1 * Math.max(sw[i - 1], sw[i]) + sw[i] / 2;
   const r = rankOf(S.logS), i0 = Math.floor(r), i1 = Math.min(n - 1, i0 + 1), fr = r - i0;
   const camX = lerp(xs[i0], xs[i1], fr), cx0 = W * .5, fi = Math.round(r);
-  const labelMaxY = H - (W > 760 ? 168 : 150);
+  const labelMaxY = H - 168;
   for (let i = 0; i < n; i++) {
     const o = list[i], d = ds[i], sx = cx0 + xs[i] - camX, lb = lblEls.get(o.id), half = d / 2;
     const on = d >= 2 && d <= 7 * H && sx + Math.max(half, 12) > -240 && sx - Math.max(half, 12) < W + 240;
@@ -166,7 +167,10 @@ function drawRuler() {
 }
 function updateHud(r) {
   const fm = focalM(), lg = log10(fm);
-  $('#sc-big').textContent = fmtLen(fm);
+  const big = fmtLen(fm);
+  if (big !== S.big) {          /* la clase por longitud ajusta el cuerpo en pantallas estrechas para que la cifra no se corte */
+    S.big = big; const el = $('#sc-big'); el.textContent = big; el.className = 'big' + (big.length > 21 ? ' l' : big.length > 16 ? ' m' : '');
+  }
   $('#sc-sci').textContent = sci(fm) + ' m';
   $('#sc-light').textContent = T.f.luzRecorre(fmtTime(fm / C));
   const ri = realmOf(lg);
@@ -256,7 +260,7 @@ function renderPanel(o) {
   $('#p-ico').innerHTML = ICON.make(o.i);
   $('#p-name').textContent = o.n;
   const chip = $('#p-cat'); chip.textContent = T.cats[o.c]; chip.style.setProperty('--c', o.col);
-  $('#p-size').textContent = fmtLen(o.s);
+  const size = fmtLen(o.s), ps = $('#p-size'); ps.textContent = size; ps.className = 'big' + (size.length > 21 ? ' l' : '');   /* las cifras largas, en un cuerpo menor */
   $('#p-sub').textContent = o.sub;
   $('#p-sci').textContent = sci(o.s, 3) + ' m';
   $('#p-desc').textContent = o.d;
@@ -358,7 +362,7 @@ for (const d of document.querySelectorAll('dialog')) d.addEventListener('click',
 function randomJump() { const list = S.objs.length ? S.objs : ALL; select(list[Math.floor(Math.random() * list.length)], true); }
 
 /* ---------- buscador ---------- */
-const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u202f/g, ' ').toLowerCase();
 const dSearch = $('#d-search'), qIn = $('#q'), resList = $('#res');
 function openSearch() { dSearch.showModal(); qIn.value = ''; renderSearch(''); setTimeout(() => qIn.focus(), 30); }
 function renderSearch(q) {

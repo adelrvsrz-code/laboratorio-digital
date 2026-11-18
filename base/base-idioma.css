@@ -1,0 +1,10 @@
+/* Base compartida: enlace de cambio de idioma (.idioma) y su forma de aviso (.idioma.aviso).
+   Usa los tokens de la exposición: --ink, --dust, --line, --glass2 y --tint. */
+.idioma{margin:4px 0 0;font-size:12.5px;line-height:1.2}
+.idioma a{display:inline-block;padding:5px 0;color:var(--dust);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.idioma a:hover{color:var(--ink)}
+.idioma.aviso{display:inline-flex;align-items:center;gap:2px;margin-top:8px;padding:1px 4px 1px 12px;border-radius:999px;border:1px solid var(--tint);background:var(--glass2)}
+.idioma.aviso a{color:var(--ink);text-decoration:none;font-weight:600}
+.idioma.aviso a::after{content:" →"}
+.idioma-x{width:26px;height:26px;border-radius:999px;border:0;background:transparent;color:var(--dust);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+.idioma-x:hover{background:rgba(255,255,255,.1);color:var(--ink)}
