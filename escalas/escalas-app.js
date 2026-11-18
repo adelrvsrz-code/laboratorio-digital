@@ -1,104 +1,28 @@
 (function () {
 'use strict';
-const C = 299792458, LY = 9.4607e15, AU = 1.495978707e11, TAU = Math.PI * 2;
+const C = 299792458, TAU = Math.PI * 2;
 const $ = (s, r) => (r || document).querySelector(s);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const log10 = Math.log10;
-const NB = '\u202F';
-const SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
-const sup = n => String(n).split('').map(c => SUP[c] || c).join('');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* ---------- formato ---------- */
-function sci(x, sig = 2) {
-  if (!x) return '0';
-  let e = Math.floor(log10(Math.abs(x))), m = Number((x / 10 ** e).toPrecision(sig));
-  if (Math.abs(m) >= 10) { m /= 10; e += 1; }
-  const ms = m.toString().replace('.', ',');
-  return (ms === '1' ? '' : ms + ' × ') + '10' + sup(e);
-}
-function fmt(x) {
-  const a = Math.abs(x); let s;
-  if (a >= 100) s = Math.round(x).toString();
-  else if (a >= 10) s = (Math.round(x * 10) / 10).toString();
-  else if (a >= 1) s = (Math.round(x * 100) / 100).toString();
-  else s = Number(x.toPrecision(3)).toString();
-  if (s.includes('e')) return sci(x);
-  let [i, f] = s.split('.');
-  i = i.replace(/\B(?=(\d{3})+(?!\d))/g, NB);
-  return f ? i + ',' + f : i;
-}
-const one = (v, sg, pl) => fmt(v) === '1' ? sg : pl;
-function withWord(x, unit) {
-  const u = Array.isArray(unit) ? unit : [unit, unit];
-  if (x >= 1e12) return fmt(x / 1e12) + ' billones de ' + u[1];
-  if (x >= 1e9) return fmt(x / 1e9) + ' mil millones de ' + u[1];
-  if (x >= 1e6) return fmt(x / 1e6) + ' millones de ' + u[1];
-  return fmt(x) + ' ' + one(x, u[0], u[1]);
-}
-function fmtLen(m) {
-  if (m >= LY * .9) return withWord(m / LY, ['año luz', 'años luz']);
-  if (m >= AU * .999) return withWord(m / AU, 'UA');
-  if (m >= 1e4) return withWord(m / 1e3, 'km');
-  if (m >= 1) return fmt(m) + ' m';
-  if (m >= 1e-2) return fmt(m * 100) + ' cm';
-  if (m >= 1e-3) return fmt(m * 1e3) + ' mm';
-  if (m >= 1e-6) return fmt(m * 1e6) + ' µm';
-  if (m >= 1e-9) return fmt(m * 1e9) + ' nm';
-  if (m >= 1e-12) return fmt(m * 1e12) + ' pm';
-  if (m >= 1e-15) return fmt(m * 1e15) + ' fm';
-  if (m >= 1e-18) return fmt(m * 1e18) + ' am';
-  return sci(m) + ' m';
-}
-function fmtTime(s) {
-  const U = (v, sg, pl) => fmt(v) + ' ' + one(v, sg, pl);
-  if (s < 1e-18) return sci(s) + ' s';
-  if (s < 1e-15) return U(s * 1e18, 'attosegundo', 'attosegundos');
-  if (s < 1e-12) return U(s * 1e15, 'femtosegundo', 'femtosegundos');
-  if (s < 1e-9) return U(s * 1e12, 'picosegundo', 'picosegundos');
-  if (s < 1e-6) return U(s * 1e9, 'nanosegundo', 'nanosegundos');
-  if (s < 1e-3) return U(s * 1e6, 'microsegundo', 'microsegundos');
-  if (s < 1) return U(s * 1e3, 'milisegundo', 'milisegundos');
-  if (s < 60) return U(s, 'segundo', 'segundos');
-  if (s < 3600) return U(s / 60, 'minuto', 'minutos');
-  if (s < 86400) return U(s / 3600, 'hora', 'horas');
-  const y = s / 31557600;
-  if (y < .999) return U(s / 86400, 'día', 'días');
-  return withWord(y, ['año', 'años']);
-}
-function fmtCount(r) {
-  if (r < 1e6) return fmt(r);
-  if (r < 1e9) return fmt(r / 1e6) + ' millones';
-  if (r < 1e12) return fmt(r / 1e9) + ' mil millones';
-  if (r < 1e18) return fmt(r / 1e12) + ' billones';
-  if (r < 1e24) return fmt(r / 1e18) + ' trillones';
-  if (r < 1e30) return fmt(r / 1e24) + ' cuatrillones';
-  return sci(r).replace(' × ', '·');
-}
-const fmtTimes = r => fmtCount(r) + (r < 1e6 || r >= 1e30 ? ' veces' : ' de veces');
-const fmtMult = q => q < 1e4 ? fmt(q) : q < 1e30 ? fmtCount(q) : sci(q).replace(' × ', '·');
+/* Los formateadores son los de la base compartida (base-fmt.js), en el idioma del archivo de textos. */
+const { sci, sup, fmtLen, fmtTime, fmtCount, fmtTimes, fmtMult } = BASEFMT(T.lang);
 
 /* ---------- datos ---------- */
+/* Cada objeto recibe los textos de su idioma: nombre, qué mide el tamaño, descripción y, si lo hay, rótulo del icono. */
+for (const o of OBJECTS) {
+  const t = T.obj[o.id]; o.n = t.n; o.sub = t.sub; o.d = t.d;
+  if (t.lab) o.i = [o.i[0], Object.assign({}, o.i[1], { label: t.lab })];
+}
 const ALL = OBJECTS.slice().sort((a, b) => a.s - b.s);
 ALL.forEach((o, i) => { o.idx = i; o.lg = log10(o.s); o.col = CATS[o.c].col; });
 const byId = Object.fromEntries(ALL.map(o => [o.id, o]));
 const LG0 = ALL[0].lg - .5, LG1 = ALL[ALL.length - 1].lg + .5;
 
-const REALMS = [
-  [-15, 'Mundo cuántico', 'Partículas, cuerdas y la frontera de la física', '#b794f6'],
-  [-10, 'Núcleos atómicos', 'Protones, neutrones y la fuerza fuerte', '#c084fc'],
-  [-7, 'Átomos y moléculas', 'Donde empieza la química', '#5ee0ff'],
-  [-4, 'Vida microscópica', 'Virus, bacterias y células', '#7ee8a2'],
-  [2.3, 'Escala humana', 'De un grano de arena a una ballena azul', '#ffd166'],
-  [6.37, 'Geografía y mundos pequeños', 'Edificios, montañas, islas y asteroides', '#5fb3ff'],
-  [9.1, 'Lunas y planetas', 'Los mundos del sistema solar', '#ff9a6a'],
-  [13.6, 'Estrellas', 'Del Sol a las supergigantes', '#fbbf24'],
-  [18.6, 'Vecindario estelar', 'Años luz, nubes y nebulosas', '#f472b6'],
-  [22.4, 'Galaxias', 'Cientos de miles de millones de soles', '#f58ef5'],
-  [99, 'Cosmos', 'Cúmulos, vacíos y el universo observable', '#c4b5fd'],
-];
 const realmOf = lg => { for (let i = 0; i < REALMS.length; i++) if (lg < REALMS[i][0]) return i; return REALMS.length - 1; };
 
 /* ---------- estado ---------- */
@@ -244,13 +168,13 @@ function updateHud(r) {
   const fm = focalM(), lg = log10(fm);
   $('#sc-big').textContent = fmtLen(fm);
   $('#sc-sci').textContent = sci(fm) + ' m';
-  $('#sc-light').textContent = 'La luz la recorre en ' + fmtTime(fm / C);
+  $('#sc-light').textContent = T.f.luzRecorre(fmtTime(fm / C));
   const ri = realmOf(lg);
   if (ri !== S.realm) {
-    S.realm = ri; const R = REALMS[ri];
-    $('#realm-name').textContent = R[1]; $('#realm-sub').textContent = R[2];
-    const wm = $('#wm'); wm.textContent = R[1]; wm.classList.remove('in'); void wm.offsetWidth; wm.classList.add('in');
-    document.documentElement.style.setProperty('--tint', R[3]);
+    S.realm = ri; const [, id, tint] = REALMS[ri], [name, sub] = T.realms[id];
+    $('#realm-name').textContent = name; $('#realm-sub').textContent = sub;
+    const wm = $('#wm'); wm.textContent = name; wm.classList.remove('in'); void wm.offsetWidth; wm.classList.add('in');
+    document.documentElement.style.setProperty('--tint', tint);
   }
   const mk = $('#rmark'); if (mk) mk.setAttribute('transform', `translate(${uOf(lg).toFixed(1)} 0)`);
   $('#prev').disabled = r <= .002; $('#next').disabled = r >= S.objs.length - 1.002;
@@ -331,12 +255,12 @@ function closePanel() { panel.classList.remove('open'); S.sel = null; try { hist
 function renderPanel(o) {
   $('#p-ico').innerHTML = ICON.make(o.i);
   $('#p-name').textContent = o.n;
-  const chip = $('#p-cat'); chip.textContent = CATS[o.c].n; chip.style.setProperty('--c', o.col);
+  const chip = $('#p-cat'); chip.textContent = T.cats[o.c]; chip.style.setProperty('--c', o.col);
   $('#p-size').textContent = fmtLen(o.s);
-  $('#p-sub').textContent = o.sub || 'diámetro';
+  $('#p-sub').textContent = o.sub;
   $('#p-sci').textContent = sci(o.s, 3) + ' m';
   $('#p-desc').textContent = o.d;
-  $('#p-light').textContent = 'La luz tarda ' + fmtTime(o.s / C) + (o.k === 'd' ? ' en recorrer esta distancia.' : o.k === 'w' ? ' en completar una oscilación.' : ' en atravesarlo de lado a lado.');
+  $('#p-light').textContent = T.f.luzTarda(fmtTime(o.s / C), o.k);
   const refs = o.id === 'humano' ? [byId.hidrogeno, byId.tierra] : [byId.humano];
   const i = S.objs.indexOf(o); if (i > 0) refs.push(S.objs[i - 1]); if (i >= 0 && i < S.objs.length - 1) refs.push(S.objs[i + 1]);
   const seen = new Set([o.id]), rows = [];
@@ -439,8 +363,8 @@ const dSearch = $('#d-search'), qIn = $('#q'), resList = $('#res');
 function openSearch() { dSearch.showModal(); qIn.value = ''; renderSearch(''); setTimeout(() => qIn.focus(), 30); }
 function renderSearch(q) {
   const n = norm(q.trim());
-  const hits = n ? ALL.filter(o => norm(o.n).includes(n) || norm(CATS[o.c].n).includes(n) || norm(o.d).includes(n)) : ALL;
-  resList.innerHTML = hits.length ? hits.map(o => { if (!o.mini) o.mini = ICON.make(o.i); return `<button class="res" data-id="${o.id}"><span class="mi">${o.mini}</span><span class="rn">${esc(o.n)}</span><span class="rs">${fmtLen(o.s)}</span></button>`; }).join('') : '<p>No hay ningún objeto con ese nombre. Prueba con otra palabra o explora la lista completa borrando el texto.</p>';
+  const hits = n ? ALL.filter(o => norm(o.n).includes(n) || norm(T.cats[o.c]).includes(n) || norm(o.d).includes(n)) : ALL;
+  resList.innerHTML = hits.length ? hits.map(o => { if (!o.mini) o.mini = ICON.make(o.i); return `<button class="res" data-id="${o.id}"><span class="mi">${o.mini}</span><span class="rn">${esc(o.n)}</span><span class="rs">${fmtLen(o.s)}</span></button>`; }).join('') : '<p>' + esc(T.ui['buscar.nada']) + '</p>';
 }
 qIn.addEventListener('input', () => renderSearch(qIn.value));
 qIn.addEventListener('keydown', e => { if (e.key === 'Enter') { const first = $('.res', resList); if (first) first.click(); e.preventDefault(); } });
@@ -448,7 +372,7 @@ resList.addEventListener('click', e => { const b = e.target.closest('.res'); if 
 
 /* ---------- filtros ---------- */
 const chips = $('#chips');
-chips.innerHTML = Object.entries(CATS).map(([k, c]) => `<button class="chip-f" data-cat="${k}" aria-pressed="true" style="--c:${c.col}">${c.n}</button>`).join('');
+chips.innerHTML = Object.entries(CATS).map(([k, c]) => `<button class="chip-f" data-cat="${k}" aria-pressed="true" style="--c:${c.col}">${esc(T.cats[k])}</button>`).join('');
 chips.addEventListener('click', e => { const b = e.target.closest('.chip-f'); if (b) setHidden(b.dataset.cat, b.getAttribute('aria-pressed') === 'true'); });
 $('#f-all').addEventListener('click', () => { for (const k of Object.keys(CATS)) setHidden(k, false); });
 function setHidden(cat, hide) {
@@ -469,10 +393,10 @@ selA.innerHTML = opts; selB.innerHTML = opts;
 function openCompare() { const a = S.sel || byId.humano; selA.value = a.id; selB.value = a.id === 'tierra' ? 'humano' : a.id === 'humano' ? 'tierra' : 'humano'; renderCompare(); dCmp.showModal(); }
 function renderCompare() {
   const a = byId[selA.value], b = byId[selB.value], q = a.s / b.s, r = Math.max(q, 1 / q), big = q >= 1 ? a : b, small = q >= 1 ? b : a;
-  $('#cmp-text').innerHTML = r < 1.05 ? `<b>${esc(a.n)}</b> y <b>${esc(b.n)}</b> tienen prácticamente el mismo tamaño.` : `<b>${esc(big.n)}</b> ÷ <b>${esc(small.n)}</b> = <b>${fmtCount(r)}</b>`;
-  $('#cmp-vol').textContent = r < 1.05 ? '' : (a.k || b.k) ? `Es decir, ${fmtTimes(r)} mayor.` : `Es decir, ${fmtTimes(r)} mayor a lo largo; en volumen, ${fmtTimes(r ** 3)}.`;
+  $('#cmp-text').innerHTML = r < 1.05 ? T.f.igual(esc(a.n), esc(b.n)) : `<b>${esc(big.n)}</b> ÷ <b>${esc(small.n)}</b> = <b>${fmtCount(r)}</b>`;
+  $('#cmp-vol').textContent = r < 1.05 ? '' : (a.k || b.k) ? T.f.mayor(fmtTimes(r)) : T.f.mayorVol(fmtTimes(r), fmtTimes(r ** 3));
   const bigPx = S.W > 760 ? 200 : 150, smallPx = bigPx / r;
-  const cell = (o, px) => px >= 3 ? `<div class="cv"><div style="width:${px}px;height:${px}px">${ICON.make(o.i)}</div><small>${esc(o.n)}</small></div>` : `<div class="cv"><div class="dot"></div><small>${esc(o.n)}: a esta escala sería más pequeño que un píxel</small></div>`;
+  const cell = (o, px) => px >= 3 ? `<div class="cv"><div style="width:${px}px;height:${px}px">${ICON.make(o.i)}</div><small>${esc(o.n)}</small></div>` : `<div class="cv"><div class="dot"></div><small>${T.f.subpixel(esc(o.n))}</small></div>`;
   $('#cmp-vis').innerHTML = cell(big, bigPx) + cell(small, smallPx);
   for (const sv of document.querySelectorAll('#cmp-vis svg')) { sv.style.width = '100%'; sv.style.height = '100%'; }
 }

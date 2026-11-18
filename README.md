@@ -19,14 +19,19 @@ Próximas candidatas (ver «Hoja de ruta»): historia universal, relatividad.
 ```
 README.md                    visión, diseño, arquitectura, flujo (este archivo)
 INSTRUCCIONES-PROYECTO.md    texto de las instrucciones del proyecto de Claude
+base/                        lo que comparten las exposiciones
+  base-fmt.js                formato de números y unidades según el idioma (funciones puras)
+  base-build.js              ensamblado común: marcadores de archivo, de idioma y de texto
+  base-check.js              comprobaciones de la base sin navegador
 escalas/                     exposición «Órdenes de magnitud»
-  escalas-data.js            catálogo de objetos (tamaños, textos, iconos)
+  escalas-data.js            catálogo de objetos (tamaños, categorías, iconos) y reinos; sin texto
+  escalas-textos.es.js       textos en español: interfaz, frases y fichas (un archivo por idioma)
   escalas-icons.js           generadores de iconos SVG
   escalas-app.js             lógica: distribución, zoom, canvas, fichas, buscador…
   escalas-styles.css         estilos y tokens
-  escalas-template.html      esqueleto HTML con marcadores {{CSS}} {{DATA}} {{ICONS}} {{APP}}
-  escalas-build.js           ensambla todo en un único HTML
-  escalas-check.js           comprobaciones del catálogo sin navegador
+  escalas-template.html      esqueleto HTML con marcadores {{CSS}} {{BASE}} {{TEXTOS}} {{DATA}} {{ICONS}} {{APP}}, {{LANG}} y {{t:clave}}
+  escalas-build.js           ensambla todo en un único HTML, en un idioma
+  escalas-check.js           comprobaciones sin navegador: catálogo, iconos, textos y plantilla
   escalas-NOTAS.md           decisiones de diseño y guía para ampliar
 luna/                        exposición «La misma Luna»
   luna-data.js               lugares, catálogo para dibujar la Luna, textos del recorrido
@@ -57,7 +62,7 @@ LICENSE                      licencia del código (MIT)
 LICENSE-CONTENIDOS.md        licencia de textos, iconos e ilustraciones (CC BY-SA 4.0)
 ```
 
-Cada exposición vive en su carpeta con su prefijo. Los archivos llevan el prefijo también en el nombre para que puedan subirse planos a un proyecto de Claude sin colisiones.
+Cada exposición vive en su carpeta con su prefijo, y lo que comparten, en `base/` con el prefijo `base-`. Los archivos llevan el prefijo también en el nombre para que puedan subirse planos a un proyecto de Claude sin colisiones.
 
 ## Principios
 
@@ -92,14 +97,16 @@ Texto: español de España, frase corta, sin relleno. Coma decimal, espacio fino
 
 ## Arquitectura común de una exposición
 
-1. **Plantilla** (`*-template.html`): esqueleto con `<meta viewport … viewport-fit=cover>`, enlace a Google Fonts y un marcador por archivo fuente: `{{CSS}}`, `{{DATA}}`, `{{ICONS}}`, `{{APP}}` en Órdenes de magnitud; `{{CSS}}`, `{{DATA}}`, `{{MAPA}}`, `{{ASTRO}}`, `{{RENDER}}`, `{{APP}}` en La misma Luna; `{{CSS}}`, `{{FIS}}`, `{{DATA}}`, `{{APP}}` en El espectro.
+1. **Plantilla** (`*-template.html`): esqueleto con `<meta viewport … viewport-fit=cover>`, enlace a Google Fonts y un marcador por archivo fuente: `{{CSS}}`, `{{BASE}}`, `{{TEXTOS}}`, `{{DATA}}`, `{{ICONS}}`, `{{APP}}` en Órdenes de magnitud; `{{CSS}}`, `{{DATA}}`, `{{MAPA}}`, `{{ASTRO}}`, `{{RENDER}}`, `{{APP}}` en La misma Luna; `{{CSS}}`, `{{FIS}}`, `{{DATA}}`, `{{APP}}` en El espectro. En las exposiciones con textos separados, la plantilla no lleva texto: el idioma va en `{{LANG}}` y cada texto fijo en un marcador `{{t:clave}}`.
 2. **Datos** (`*-data.js`): contenido como estructuras JS simples, separadas de la lógica. Es el archivo que más se edita.
 3. **Iconos** (`*-icons.js`): generadores SVG propios con un `viewBox` fijo de `0 0 100 100`; incluyen un tipo genérico `image` para incrustar imágenes propias como data URI.
 4. **Lógica** (`*-app.js`): un IIFE con las secciones formato, datos, estado, distribución, dibujo, HUD, entrada, paneles, arranque.
 5. **Estilos** (`*-styles.css`): tokens arriba, luego escenario, cabecera, pie, paneles, diálogos, varios, media queries.
-6. **Build** (`*-build.js`): solo concatena; no hay transpilación ni minificado. Salida por defecto en `dist/`; el despliegue le pasa como argumento la ruta pública (`_site/<ruta>/index.html`).
+6. **Build** (`*-build.js`): solo sustituye marcadores; no hay transpilación ni minificado. Salida por defecto en `dist/`; el despliegue le pasa como argumento la ruta pública (`_site/<ruta>/index.html`). Con textos separados, `node <prefijo>-build.js [idioma] [salida]` ensambla un HTML por idioma (sin idioma, español) usando `base/base-build.js`.
 7. **Comprobaciones** (`*-check.js`): validaciones del contenido ejecutables con Node sin navegador y sin instalar nada.
-8. **Cálculo y rasterizado**, cuando la exposición los necesita (`luna-astro.js`, `luna-render.js`, `espectro-fis.js`): funciones puras, sin DOM, en archivos propios para poder comprobarlas en Node. Si hay un resultado de referencia contra el que medirlas, se guarda como tabla en el repositorio (`luna-ref.json`) y la herramienta que la generó queda fuera de la exposición; si el cálculo de referencia no necesita nada externo, la comprobación lo repite directamente (`espectro-atm-gen.js`).
+8. **Textos** (`*-textos.<idioma>.js`), en las exposiciones ya migradas (hoy, Órdenes de magnitud): todo lo que se lee —interfaz, frases y contenido— en un archivo por idioma, con las mismas claves en todos. Los datos quedan sin texto y la lógica sin cadenas visibles. Las frases con datos dentro son funciones, porque el orden de las palabras cambia con el idioma. El español es el original.
+9. **Base compartida** (`base/`): `base-fmt.js` da los formateadores (`fmtLen`, `fmtTime`, `fmtCount`…) con la configuración regional de cada idioma: signo decimal, separador de miles, escala larga o corta, nombres de unidades, singular y plural. Incluye los tres redondeos que usan las exposiciones (`auto`, `fixed`, `sig`). `base-check.js` lo comprueba con casos en cada idioma.
+10. **Cálculo y rasterizado**, cuando la exposición los necesita (`luna-astro.js`, `luna-render.js`, `espectro-fis.js`): funciones puras, sin DOM, en archivos propios para poder comprobarlas en Node. Si hay un resultado de referencia contra el que medirlas, se guarda como tabla en el repositorio (`luna-ref.json`) y la herramienta que la generó queda fuera de la exposición; si el cálculo de referencia no necesita nada externo, la comprobación lo repite directamente (`espectro-atm-gen.js`).
 
 Rendimiento: lo que se anima de forma continua se dibuja en un único `canvas` con mapas de bits pre-rasterizados (ver `escalas-NOTAS.md`). El DOM queda para la interfaz. Nada de `will-change` en muchos elementos, filtros CSS animados, `backdrop-filter` o `mix-blend-mode` a pantalla completa: en entornos con GPU compartida (el visor de artefactos de Claude, portátiles modestos) dejan mosaicos sin pintar.
 
@@ -108,8 +115,8 @@ Estado y enlaces: el objeto o posición actual va en el hash de la URL (`#tierra
 ## Flujo de trabajo
 
 1. Plan breve antes de construir (objetivo, elemento memorable, datos y fuentes, interacciones, qué queda fuera).
-2. Editar los archivos fuente; `node --check` en cada JS; `node <prefijo>-check.js`.
-3. `node <prefijo>-build.js` → `dist/<nombre>.html`.
+2. Editar los archivos fuente; `node --check` en cada JS; `node <prefijo>-check.js` y, si se toca la base, `node base/base-check.js`.
+3. `node <prefijo>-build.js` → `dist/<nombre>.html` (un HTML por idioma en las exposiciones con textos separados).
 4. Prueba en navegador sin cabeza (Playwright) a 1366×820 y 390×780: capturas, interacción básica, cero errores de consola, fps aproximados.
 5. Publicar como artefacto de Claude para probar en otros dispositivos. La versión pública no se sube a mano: en cada push a `main`, GitHub Actions (`.github/workflows/pages.yml`) repite `node --check` y `<prefijo>-check.js`, ensambla cada exposición en `_site/<ruta>/index.html`, copia `site/` como raíz y despliega en GitHub Pages. Si una comprobación falla, no se publica nada. Al añadir una exposición: una línea más de build en el workflow y su entrada en la portada.
 6. Actualizar el índice de este README y las NOTAS de la exposición.
@@ -138,10 +145,11 @@ Sin red, el navegador sin cabeza cae en la tipografía de respaldo y los rótulo
 
 - **Historia universal.** Candidata natural tras Escalas: una línea de tiempo logarítmica del Big Bang a hoy, con la misma mecánica de zoom (el tiempo también abarca decenas de órdenes de magnitud) y «reinos» (cosmológico, geológico, biológico, humano).
 - **Relatividad.** Pequeños experimentos: dilatación del tiempo y contracción de longitudes con un deslizador de velocidad, diagramas de Minkowski, el reloj de luz, la paradoja de los gemelos. Elemento memorable por decidir.
-- **Mejoras de Escalas.** Modo bilingüe (los textos ya están aislados en `escalas-data.js`), más objetos (ver NOTAS), imágenes reales en objetos concretos con el tipo `image`.
+- **Bilingüe: español original e inglés.** Un HTML por idioma, generado en el build; el español conserva sus rutas y el inglés irá en `/en/…`. Sin selector en caliente ni redirección automática: un enlace que conserva el hash y un aviso discreto cuando el navegador no declara español. Hecho: textos de Órdenes de magnitud separados por idioma y formato regional en la base. Siguiente: su versión inglesa (textos, ruta, aviso, portada en `/en/`) y la comprobación de que las cifras coinciden en los dos idiomas. Después, La misma Luna y El espectro con el mismo mecanismo.
+- **Mejoras de Escalas.** Más objetos (ver NOTAS), imágenes reales en objetos concretos con el tipo `image`.
 - **Mejoras de La misma Luna.** Usar la ubicación del visitante, comparar dos lugares cada uno en su anochecer, el Sol y los eclipses en el cielo del observador (ver NOTAS).
 - **Mejoras de El espectro.** Sustituir el tramo infrarrojo del perfil, que es un esquema, por uno derivado de un modelo de transmisión; siglas de la UIT en el dial; la radiación que sale de la Tierra; curvas de cuerpo negro con deslizador de temperatura (ver NOTAS).
-- **Base compartida.** Ya hay tres exposiciones: toca extraer a un archivo común los tokens, los formateadores de números y la plantilla de cabecera y pie, que hoy están duplicados en `escalas-*`, `luna-*` y `espectro-*`.
+- **Base compartida.** Los formateadores de números ya están en `base/base-fmt.js` y los usa Órdenes de magnitud; `fixed` y `sig` reproducen los de La misma Luna y El espectro, que siguen con su copia hasta que migren. Quedan por extraer los tokens y la plantilla de cabecera y pie, duplicados en `escalas-*`, `luna-*` y `espectro-*`.
 
 ## Licencia
 

@@ -27,7 +27,10 @@ jobs:
       # El runner ya trae Node y el laboratorio no tiene dependencias: no hace falta instalar nada.
       - name: Comprobar fuentes
         run: |
+          node --check base/base-fmt.js
+          node base/base-check.js
           node --check escalas/escalas-data.js
+          node --check escalas/escalas-textos.es.js
           node --check escalas/escalas-icons.js
           node --check escalas/escalas-app.js
           node escalas/escalas-check.js
